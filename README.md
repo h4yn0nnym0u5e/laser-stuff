@@ -13,3 +13,6 @@ Rotate the shape using standard audio library objects. There are some issues wit
 Create and test a specific object that takes X and Y conrdinates on two inputs, and a rotation angle on the third, and emits rotated X and Y outputs. Rotation input maps -1.0 .. 1.0 to -180° .. +180°. `AudioEffectRotator::reverse(bool)` sets the rotation direction - if true, then -1.0 maps to +180°, and _vice versa_. There is also a new `AudioMixerSummer` object which is similar to the existing `AudioMixer4`, but allows over / underflow on the summed inputs, and does not provide a `gain()` function. 
 
 As initially written, the `AudioEffectRotator` consumes about 0.3% of a Teensy 4.1's CPU time.
+
+### ILDAfilePlayer
+Plays back a .ILD file. Only outputs XY data on channels 7+8 of a CS42448 audio board, so it's not DC, there's no laser modulation, it assumes Format 0 records, etc etc. But it does work...
