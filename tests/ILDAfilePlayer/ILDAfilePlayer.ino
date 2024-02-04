@@ -25,6 +25,8 @@ int queuedSamples;
 void setup() 
 {
   AudioMemory(100); // plenty, for queues and TDM
+
+  pinMode(LED_BUILTIN,OUTPUT);
   
 //halt_cpu();
   while(!Serial)
@@ -117,6 +119,7 @@ void sendILDA(File& f)
     f.seek(0);
     f.read(&hdr,sizeof hdr);
     //Serial.println("loop\n");
+    digitalToggleFast(LED_BUILTIN);
   }
 
   int recs = hdr.getRecords();

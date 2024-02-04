@@ -16,3 +16,6 @@ As initially written, the `AudioEffectRotator` consumes about 0.3% of a Teensy 4
 
 ### ILDAfilePlayer
 Plays back a .ILD file. Only outputs XY data on channels 7+8 of a CS42448 audio board, so it's not DC, there's no laser modulation, it assumes Format 0 records, etc etc. But it does work...
+
+### ILDAfilePlayer3
+Plays back a .ILD file using the AudioPlayILDA object. Outputs XYZRGBs data on channels 1-7 of a PCM3168 audio board.
