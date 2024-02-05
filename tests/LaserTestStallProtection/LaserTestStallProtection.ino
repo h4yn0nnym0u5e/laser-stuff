@@ -1,5 +1,5 @@
 /*
- * Test of AudioPlayILDA.
+ * Test of AudioPlayILDA and stall protection.
  * The target 035.ild file seems to have some slightly weird blanking,
  * resulting in ~136ms of blank time, and some lines crossing the
  * projection area which look incorrect, but it seems to work OK.
@@ -8,8 +8,6 @@
 
 // GUItool: begin automatically generated code
 AudioPlayILDA            playILDA1;      //xy=578,205
-AudioMixerSummer         summer1;        //xy=609,318
-AudioEffectRotator       rotator1;       //xy=618,413
 AudioRecordQueue         queue1;         //xy=744,100
 AudioEffectProtectStall  protectStall1;  //xy=920,209
 AudioOutputTDM2          tdm2O;         //xy=1127,232
@@ -72,62 +70,18 @@ void setup()
   Serial.println("=======================");
   delay(1000);
 
-  protectStall1.setRGBsafevalue(-0.5f);
+  // protectStall1.setRGBsafeValue(-0.5f); // enable to see when protection kicks in
   queue1.begin();
   playILDA1.createBuffer(4096,AudioBuffer::inHeap);
   playILDA1.play(fileName);
   theTimer = 0;
-
-  //prepareILDA(/*"/ilda/All Colors Sharp Dots.ild" */  "/ilda/ilddolf.ild" );
-}
-
-
-//------------------------------------------------------------------------------
-volatile bool galvosRunning;
-bool XgalvosAreRunning(audio_block_t** blocks, int threshold)
-{
-  bool result = false;
-  
-  int xmin=99999,xmax=-99999,ymin=99999,ymax=-99999;
-  for (int i=0;i<AUDIO_BLOCK_SAMPLES && !result;i++)
-  {
-    if (nullptr != blocks[0])
-    {
-      if (blocks[0]->data[i] > xmax) xmax = blocks[0]->data[i];
-      if (blocks[0]->data[i] < xmin) xmin = blocks[0]->data[i];
-    }
-    if (nullptr != blocks[1])
-    {
-      if (blocks[1]->data[i] > ymax) ymax = blocks[1]->data[i];
-      if (blocks[1]->data[i] < ymin) ymin = blocks[1]->data[i];
-    }
-
-    if (xmax - xmin > threshold
-     || ymax - ymin > threshold)
-     result = true;
-  }
-  galvosRunning = result;
-  return result;
-}
-
-bool galvosStateChanged(void)
-{
-  static bool last;
-  bool result = false;
-
-  if (last != galvosRunning)
-  {
-    last = galvosRunning;
-    result = true;
-  }
-
-  return result;
 }
 
 
 //------------------------------------------------------------------------------
 volatile int16_t* data;
 int count;
+bool protectActive;
 
 void loop() 
 {
@@ -138,17 +92,8 @@ void loop()
     count--;
     if (count < 0)
     {
-      //digitalToggleFast(LED_BUILTIN);
-      count = 9;
-      Serial.printf("%d: validCount = {%d,%d}; %s; update count = %d; time since move %d\n",
-                    millis(),
-                    playILDA1.validCount[0],playILDA1.validCount[1],
-                    protectStall1.isUpdating()?"OK":"***** No! *****",
-                    protectStall1.getUpdateCount(),
-                    millis() - protectStall1.lastMoved
-//                    protectStall1.isRunning?"r":"s"
-//                    protectStall1.sTime
-                    );
+      digitalToggleFast(LED_BUILTIN);
+      count = 100;
     }
   }
 
@@ -165,8 +110,10 @@ void loop()
     playILDA1.play(fileName);
   }
 
-  if (galvosStateChanged())
+  if (protectActive != protectStall1.isProtecting())
   {
-    Serial.printf("Galvos are %s\n",galvosRunning?"running":"stalled");
+    protectActive = protectStall1.isProtecting();
+
+    Serial.printf("t=%d: Protection system %s\n", millis(), protectActive?"ON":"off");
   }
 }
