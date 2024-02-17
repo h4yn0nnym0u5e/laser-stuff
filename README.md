@@ -19,3 +19,14 @@ Plays back a .ILD file. Only outputs XY data on channels 7+8 of a CS42448 audio 
 
 ### ILDAfilePlayer3
 Plays back a .ILD file using the AudioPlayILDA object. Outputs XYZRGBs data on channels 1-7 of a PCM3168 audio board.
+
+### LaserTestStallProtection
+### LaserTestStallProtectionV2
+Demonstrate the use of the `AudioEffectProtectStall` object. V2 adds overall rotation, which actually defeats the protection because even when playback stops, the spot is still being rotated.
+
+### LaserTestPalette
+Demonstrate the use of the palette - at time of writing, still seeking an ILDA file with a built-in palette.
+
+### LaserTestRAMplay
+Test of buffering a whole ILDA file in RAM (EXTMEM in this case) and playing it from there.
+
