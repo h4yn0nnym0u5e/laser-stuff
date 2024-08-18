@@ -65,7 +65,7 @@ void setup()
   AudioMemory(100); // plenty, for queues and TDM
 
   pinMode(LED_BUILTIN,OUTPUT);
-  resetPCM3168();
+  pcm3168.reset(PCM3168_RST);
   
   while(!Serial)
     ;
@@ -81,8 +81,8 @@ void setup()
   }  
   
   Serial.println("=======================");
-  wav1.begin(1.0f,0.25f,WAVEFORM_SAWTOOTH);
-  delay(1000);
+  //wav1.begin(1.0f,0.25f,WAVEFORM_SAWTOOTH);
+  delay(10);
 
   // protectStall1.setRGBsafeValue(-0.5f); // enable to see when protection kicks in
   queue1.begin();
@@ -111,13 +111,13 @@ void loop()
     }
   }
 
-  if (playILDA1.isPlaying() && theTimer > 7000)
+  if (playILDA1.isPlaying() && theTimer > 70000)
   {
     Serial.println("stop");
     playILDA1.stop();
   }
 
-  if (theTimer > 8000)
+  if (theTimer > 70800)
   {
     theTimer = 0;
     Serial.println("play");

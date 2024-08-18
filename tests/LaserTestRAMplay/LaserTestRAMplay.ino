@@ -58,7 +58,7 @@ void resetPCM3168(void)
 // 
 uint8_t* memILDA;
 size_t szILDA;
-const char* fileName = "/ilda/035.ild"; // "/ilda/ilddolf.ild"; // 
+const char* fileName = "/ilda/ilddolf.ild"; // "/ilda/035.ild"; // 
 
 /*
  * Load ILDA file to EXTMEM for non-streaming playback
@@ -192,7 +192,7 @@ void loop()
   
   // mess with the palette
   // we happen to know the dolphin uses colours 40 and 56
-  if (pTimer > 1)
+  if (false and pTimer > 1)
   {
     pTimer = 0;
 
