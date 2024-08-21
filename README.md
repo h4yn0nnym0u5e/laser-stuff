@@ -24,6 +24,9 @@ Plays back a .ILD file using the AudioPlayILDA object. Outputs XYZRGBs data on c
 Plays back a .ILD file using the AudioPlayILDA object. Outputs XYZRGBs data on channels 1-7 of a PCM3168 audio board. Includes ability to 
 send commands from the serial monitor to vary the playback rate and switch to playback of a named file from a RAM buffer.
 
+### ILDAinfo
+Use of utility methods to get information on ILDA files, and load to memory
+
 ### LaserTestStallProtection
 ### LaserTestStallProtectionV2
 Demonstrate the use of the `AudioEffectProtectStall` object. V2 adds overall rotation, which actually defeats the protection because even when playback stops, the spot is still being rotated.
@@ -36,3 +39,12 @@ Test of buffering a whole ILDA file in RAM (EXTMEM in this case) and playing it 
 
 ### StructTester
 Demo of using structs to package up repeated elements in the otherwise flat structure provided by the native Design Tool. In an ideal world one would use classes, but let's not get ahead of ourselves...
+
+### StructTester02
+Demonstrate more stuff, including use of a streamed or in-memory ILDA file to give a rotating triangular repeat. Needs `/ilda/triangle.ild` on the SD card.
+
+## ilda
+Some useful ILDA-format files
+
+## python
+Playing about with using spreadsheets and Python to create our own simple ILDA files
