@@ -423,8 +423,8 @@ void setup()
   setGain(qoscs[0], 0.2f);
   setRatio(qoscs[0],1.005f);
 
-  //*/
-  playILDA(shape, 40.0f); // it's a triangle, so 1/3 of ellipse freq
+  //*/ Choose memory or streaming playback here!
+  playILDA(shape, 37.0f); // it's a triangle, so 1/3 of ellipse freq, allow for blanking
   /*/
   playILDA1.createBuffer(16384,MemBuffer::inHeap);
   playILDA1.setPlaybackRate(0.4);

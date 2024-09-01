@@ -7,7 +7,14 @@ fp = "D:/Installers/Laser" # /shownet"
 fp = "E:/Jonathan/Teensy/laser-stuff"
 fp = "E:/Jonathan/Teensy/laser-stuff"
 
-src = [
+src = [[ # 3-point triangle - play back SLOWLY!
+    [-32767,     0,0,2],
+    [ 16383, 28377,0,4],
+    [ 16383,-28378,0,6]
+    ]]
+
+
+srcQ = [ # 441-point triangle with blanking
 [
 [-32767,0,0,1],
 [-32767,0,0,1],
@@ -455,7 +462,8 @@ src = [
 ]
     ]
 
-name="triangle.ild"
+name="triangle-3pt.ild"
+hdrname = b"trian3pt"
 ffp = os.path.join(fp,'ilda',name)
 ffj = os.path.join(fp,'python',name.replace('.ild','.json'))
 #src = json.load(
@@ -466,14 +474,14 @@ recFmt = ">hhBB"  # Format 1 record: X Y status colour
 
 n=0
 for frame in src:
-    hdr = struct.pack(hdrFmt,b"ILDA",1,b"triangle",b"h4yn0nny",len(frame),n,len(src)+1,0)
+    hdr = struct.pack(hdrFmt,b"ILDA",1,hdrname,b"h4yn0nny",len(frame),n,len(src)+1,0)
     n += 1
     print(hdr)
     opf.write(hdr)
     for record in frame:
         rec = struct.pack(recFmt,record[0],record[1],record[2],record[3])
         opf.write(rec)
-hdr = struct.pack(hdrFmt,b"ILDA",1,b"triangle",b"h4yn0nny",0,n,len(src)+1,0)        
+hdr = struct.pack(hdrFmt,b"ILDA",1,hdrname,b"h4yn0nny",0,n,len(src)+1,0)        
 opf.write(hdr)
 opf.close()                      
 
