@@ -1,6 +1,20 @@
 /*
  * Test of AudioPlayILDA with playback rate setting and different 
- * indexing schemes
+ * indexing schemes.
+ * 
+ * We have one ILDA file, which consists of 3 points using the palette
+ * to colour them red, green and blue, lying at the corners of an
+ * equilateral triangle.
+ * 
+ * We load this into memory, and play it back using two AudioPlayILDA objects
+ * with different settings:
+ * * the first is a position modulator, using FLOOR indexing and a loop 
+ *   frequency of 30Hz: this steps to the triangle's points, remaining at 
+ *   each for 11.1ms
+ * * the second is a shape drawer, using INTERPOLATION indexing to draw
+ *   smooth lines between the triangle's points, changing colour as it
+ *   goes. With a loop frequency of 90Hz, we get one shape drawn
+ *   at each corner of the positioning triangle
  */
 #include <Audio.h>
 
@@ -60,12 +74,20 @@ struct Shape
 };
 
 Shape shapes[2];
-//  = "/ilda/ilddolf.ild"; // "/ilda/035.ild"
-// "/ilda/All Colors Sharp Dots.ild" 
 
 /*
  * Load ILDA file to EXTMEM for non-streaming playback
  * If successful,memILDA is not nullptr, and szILDA is set
+ * 
+ * We calculate the 'natural' loop frequency and store it,
+ * so that it's easy later to set a rate that will loop
+ * at a chosen frequency.
+ * 
+ * The natural frequency is as given by the library, assuming
+ * one sample emitted for every point in the file. This allows 
+ * the whole thing to be run at a different sample rate from
+ * the default 44.1kHz, and you'll still be driving the
+ * galvos at the same rate.
  */
 bool loadBuffer(Shape& shp, const char* fn)
 {
@@ -95,27 +117,17 @@ bool loadBuffer(Shape& shp, const char* fn)
     }
   }
   f.close();
-Serial.printf("Load '%s' to %08X, size %d, loop freq %.2f\n", fn, (uint32_t) shp.memILDA, (uint32_t) shp.szILDA, shp.loopFreq);
+  
+  Serial.printf("Load '%s' to %08X, size %d, loop freq %.2f\n", fn, (uint32_t) shp.memILDA, (uint32_t) shp.szILDA, shp.loopFreq);
 
   return nullptr != shp.memILDA;
 }
 
-//------------------------------------------------------------------------------
-void playILDA(const char* fp)
-{
-  bool ok = playILDA1.play(fp);
-  Serial.printf("%slaying %s\n",ok?"P":"Not p",fp);
-}
 
 //------------------------------------------------------------------------------
 /*
-void playILDA()
-{
-  bool ok = (nullptr != memILDA)?playILDA1.play(memILDA,szILDA):false;
-  Serial.printf("%slaying from RAM\n",ok?"P":"Not p");
-}
-*/
-//------------------------------------------------------------------------------
+ * Play a pre-loaded shape at a given loop frequency
+ */
 void playILDA(AudioPlayILDA& pi, Shape& shp, float frequency)
 {
   pi.setPlaybackRate(frequency/shp.loopFreq); 
@@ -137,7 +149,6 @@ void setup()
     digitalToggleFast(LED_BUILTIN);
   }
     
-
   pcm3168.enable();
   pcm3168.volume(0.5f);
   pcm3168.inputLevel(0.5f);
@@ -151,20 +162,26 @@ void setup()
   Serial.println("=======================");
   delay(100);
 
-  wav1.begin(1.0f, 0.1f, WAVEFORM_SAWTOOTH); // rotation rate 1
-  wav2.begin(1.0f, 0.3f, WAVEFORM_SAWTOOTH); // rotation rate 2
+  wav1.begin(1.0f, 0.10f, WAVEFORM_SAWTOOTH); // rotation rate 1
+  wav2.begin(1.0f, 0.37f, WAVEFORM_SAWTOOTH); // rotation rate 2
   rotator2.reverse(true);
 
-  loadBuffer(shapes[0], "/ilda/triangle.ild");
-  loadBuffer(shapes[1], "/ilda/triangle-3pt.ild");
+  loadBuffer(shapes[0], "/ilda/triangle.ild"); // 137 points wait, 10 points transition while blank
+  loadBuffer(shapes[1], "/ilda/triangle-3pt.ild"); // three points of different colours
   
   playILDA1.createBuffer(32768,AudioBuffer::inHeap); // plenty needed if high-speed playback required!
   playILDA2.createBuffer(32768,AudioBuffer::inHeap); // plenty needed if high-speed playback required!
 
-  playILDA1.setInterpolationMethod(AudioPlayILDA::INTERPOLATE);
-  playILDA2.setInterpolationMethod(AudioPlayILDA::INTERPOLATE);
-  playILDA(playILDA1, shapes[0],  30.0f); // step to each point and wait
-  playILDA(playILDA2, shapes[1], 120.0f); // draw a shape
+  // Default interpolation is FLOOR, by special request of Roj
+  // playILDA1.setInterpolationMethod(AudioPlayILDA::FLOOR);
+  // playILDA1.setInterpolationMethod(AudioPlayILDA::ROUND);
+  
+  // For drawing a shape given only its corners, we MUST interpolate
+  playILDA2.setInterpolationMethod(AudioPlayILDA::INTERPOLATE); // interpolate position and colour when drawing
+
+  // we're only using the 3-point file here, as a demo
+  playILDA(playILDA1, shapes[1],  30.0f); // step to each point and wait
+  playILDA(playILDA2, shapes[1],  90.0f); // draw a shape
 
   // point stepper
   mixerX.gain(0,0.8f);
@@ -190,6 +207,8 @@ int idx;
 
 void loop() 
 {
+  // queue is just used to know when audio update has occurred
+  // we don't care about its content
   if (queue1.available())
   {
     data = queue1.readBuffer();
@@ -204,6 +223,8 @@ void loop()
     }
   }
 
+// Serial commands not used for this, but leave code in
+/*
   while (Serial.available())
   {
     char ch = Serial.read();
@@ -222,15 +243,15 @@ void loop()
       }
       else if (1 == idx) // blank entry
         playILDA("/ilda/035.ild");        
-        /*
+       
       else if (loadBuffer(buf)) // valid filename
       {
         Serial.println(buf);
         playILDA(); // play from RAM buffer
       }
-      */
       
       idx=0;
     }
   }
+  */
 }
