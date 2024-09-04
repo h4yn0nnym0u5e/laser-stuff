@@ -74,8 +74,8 @@ bool Shape::load(const char* fp, where_e w, FS& fs)
       }
 
     // open the file
-    pfs = &fs;
-    File f = pfs->open(fp);
+    pfs = &fs; // store the filesystem, in case we're streaming
+    File f = pfs->open(fp,FILE_READ);
     if (!f)
       break;
       
@@ -132,7 +132,7 @@ bool Shape::load(const char* fp, where_e w, FS& fs)
     f.close();
   } while (0);
 
-  Serial.printf("%s %s\n", result?"Loaded":"Failed to load", fp);
+  //Serial.printf("%s %s\n", result?"Loaded":"Failed to load", fp);
   return result;
 }
 
@@ -153,6 +153,9 @@ bool Shape::play(AudioPlayILDA& pi, float frequency)
       ok = pi.play(fileName, *pfs);
       break;
   }
+
+  if (ok)
+    ppi = &pi;
 
   return ok;
 }

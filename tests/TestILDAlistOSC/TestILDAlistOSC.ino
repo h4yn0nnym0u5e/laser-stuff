@@ -1,10 +1,7 @@
 #include "ILDAlist.h"
+#include "osc.h"
 
 #include <Audio.h>
-#include <Wire.h>
-#include <SPI.h>
-#include <SD.h>
-#include <SerialFlash.h>
 
 // GUItool: begin automatically generated code
 AudioPlayILDA            playILDA1;      //xy=346,451
@@ -89,17 +86,125 @@ void setup()
   sgtl5000.setAddress(HIGH);
   sgtl5000.enable();
   sgtl5000.volume(0.05f);
+  
+  initOSC();
 
-  ILDAlist& fileList = listFiles(SD);
-  testOpen(fileList,3);
+  Serial.println("Ready");  
 
-  shapes[0].loadHeap("ilda/triangle-3pt.ild");
-  playILDA1.setInterpolationMethod(AudioPlayILDA::INTERPOLATE);
-  wav1.begin(1.0f, 0.25f,WAVEFORM_SAWTOOTH);
-  shapes[0].play(playILDA1,30.0f);
 }
+
+
+#define BUFLEN 50
+char buf[BUFLEN+1];
+int idx;
 
 void loop() 
 {
+  updateOSC();  
 
+  while (Serial.available())
+  {
+    char ch = Serial.read();
+    if (idx < BUFLEN)
+      buf[idx++] = ch;
+
+    if ('\n' == ch)
+    {
+      float speed;
+      int n, nr;
+      
+      buf[idx-1]= 0; // terminate
+      //Serial.printf("'%s': ",buf);
+      
+      if (0 == strncmp(buf,"li",2))
+      {
+        listFiles(SD);
+      }
+      else if (1 == sscanf(buf, "ld:%d:%n", &n, &nr)) // load ILDA to shape
+      {
+        if (n>=0 && n<8)
+        {
+          shapes[n].loadHeap(buf+nr);
+          Serial.printf("%s %s\n",shapes[n].isReady()?"Loaded":"Failed to load",buf+nr);
+        }
+      }
+      else if (2 == sscanf(buf, "pl:%d:%f", &n, &speed)) // play shape at frequency
+      {
+        if (n>=0 && n<8 && shapes[n].isReady())
+          Serial.printf("%s %s at %.2fHz\n",
+              shapes[n].play(playILDA1,speed)?"Playing":"Failed to play",
+              shapes[n].getFilename(),
+              speed
+              );
+      }
+      else if (0 == strncmp(buf, "stop", 4)) // stop playing
+      {
+        playILDA1.stop();
+        Serial.println("Stopped");
+      }
+      idx=0;
+      buf[0]=0;
+      Serial.println();
+    }
+  }
+}
+
+/*
+ * Functions to apply ILDA methods sent by OSC
+ */
+void routeILDA(OSCMessage& msg,int addressOffset,OSCBundle& reply) 
+{
+  static ILDAlist* pList = nullptr;
+  OSCMessage& repl = OSCUtils::staticPrepareReplyResult(msg,reply);
+
+  // load list of files
+  if (OSCUtils::isStaticTarget(msg,addressOffset,"/init","s"))
+  {
+    char root[50];
+    msg.getString(0,root,50);
+    
+    if (nullptr != pList)
+      delete pList;
+
+    pList = new ILDAlist(SD,root);
+    repl.add(pList->fileCount()).add(0);
+  }
+  else if (nullptr != pList)
+  {
+    // get an entry from the list
+    if (OSCUtils::isStaticTarget(msg,addressOffset,"/entry","i"))
+    {
+      int fnum = msg.getInt(0);
+      if (fnum <= pList->fileCount())      
+        repl.add(pList->getPath(fnum)).add(0);
+      else
+        repl.add((int) OSCUtils::NOT_FOUND);
+    }
+    
+  }
+  else    
+    repl.add((int) OSCUtils::NOT_CONNECTED);
+}
+
+/*
+ * Function to apply Shape methods sent by OSC
+ */
+void routeShape(OSCMessage& msg,int addressOffset,OSCBundle& reply) 
+{
+  OSCMessage& repl = OSCUtils::staticPrepareReplyResult(msg,reply);
+
+  // load ILDA file to RAM, with data in given shapes[] element
+  if (OSCUtils::isStaticTarget(msg,addressOffset,"/load","iss"))
+  {
+    int slot;
+    char where[5];
+    char fn[50];
+
+    slot = msg.getInt(0);
+    msg.getString(1,fn,50);
+    msg.getString(2,where,50);
+    Serial.printf("Load shape %s to slot %d, using %s\n", fn, slot, where);
+  }
+    
+  repl.add(0);
 }

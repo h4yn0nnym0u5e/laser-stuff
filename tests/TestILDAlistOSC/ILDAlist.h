@@ -28,6 +28,7 @@ class Shape
     float loopFreq;
     enum where_e {STREAM, HEAP, EXT} where;
     bool load(const char* fp, where_e w, FS& fs);
+    AudioPlayILDA* ppi;
     
   public:
     Shape() : memILDA(nullptr), szILDA(0), pfs(nullptr), fileName(nullptr) {}
@@ -35,4 +36,7 @@ class Shape
     bool loadExt(const char* fp, FS& fs = SD)  { return load(fp, EXT, fs); }
     bool prepStream (const char* fp, FS& fs = SD)  { return load(fp, STREAM, fs); }
     bool play(AudioPlayILDA& pi, float frequency);
+    void stop(void) { if (nullptr != ppi) { ppi->stop(); ppi = nullptr; }}
+    bool isReady(void) { return nullptr != fileName; }
+    char* getFilename(void) { return fileName; }
 };
