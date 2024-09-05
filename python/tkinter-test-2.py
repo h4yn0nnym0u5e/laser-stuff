@@ -18,25 +18,27 @@ class ILDAchooser:
         frm.columnconfigure(0,weight=1)
         frm.rowconfigure(1,weight=1)
         ttk.Label(frm, text="Hello World!").grid(column=0, row=0)
-        ttk.Button(frm, text="Quit", command=root.destroy).grid(column=1, row=0)
+        ttk.Button(frm, text="Quit", command=root.destroy).grid(column=2, row=0)
         
         entry_var = StringVar()
-        entry = ttk.Entry(frm, textvariable=entry_var).grid(column=2, row=0, rowspan=2, sticky="news")
+        entry = ttk.Entry(frm, textvariable=entry_var).grid(column=2, row=1, rowspan=2, sticky="news")
         
-        undr = ttk.Frame(frm, padding=10, name="undr")
+        undr = ttk.Frame(frm, padding=5, name="undr")
         undr.configure(borderwidth=2, relief="raised")
         undr.grid(column=0, row=1, columnspan=2, sticky="news")
         undr.columnconfigure(0,weight=1)
         undr.rowconfigure(1,weight=1)
         #undr.grid()
-        ttk.Label(undr, text="ILDA files on SD").grid(column=0, row=0, columnspan=2, sticky="w")
+        ttk.Label(undr, text="ILDA files on SD").grid(column=0, row=0, sticky="w")
+        ttk.Button(undr, text="Load", command=self._loadTree).grid(column=1, row=0)
         
         scrollbar = ttk.Scrollbar(undr)
         listbox = ttk.Treeview(undr, yscrollcommand=scrollbar.set, show="tree")
         scrollbar.configure(command=listbox.yview)
         
-        listbox.grid(row=1, column=0, sticky="news")
-        scrollbar.grid(row=1, column=1, sticky="nse")
+        listbox.grid(row=1, column=0, columnspan=2, sticky="news")
+        scrollbar.grid(row=1, column=2, sticky="nse")
+        listbox.bind("<ButtonRelease-1>", lambda e:self.onClick(e, entry_var))
 
         self.root = root
         self.osc=OSCutil(port)
@@ -69,12 +71,12 @@ class ILDAchooser:
             rvd = OSCutil.unpackAuto(rv)
             fname = rvd['content'][0]['params'][1]
             self.files += [fname]
-
+        
     def setupTree(self):
         """
         Create the tree view of the ILDA files on SD,
         based on the local list retrieved earlier.
-        
+
         The Teensy may supply these in a weird order, but
         we attempt to make it a bit clearer by at least
         listing sub-folders first, then files.
@@ -89,34 +91,38 @@ class ILDAchooser:
                     if path not in depths:
                         depths[path] = 0
                     where = depths[path]
-                    if folder == tl[-1]:
+                    if folder == tl[-1]:  # file, not folder
                         where = "end" 
                     else:
                         depths[path] += 1
                     self.listbox.insert(path, where, iid=newPath, text=folder)
                 path = newPath
             
-       
-def onClick(event: Event, entry_var):
-    wdg = event.widget
-    sel = wdg.selection()
-    print("you've selected ", end='')
-    evv=''
-    for item in sel:
-        wit=wdg.item(item,"text")
-        print(wit, item, end=', ')
-        evv += item + ' '
-    print()
-    entry_var.set(evv)        
+    def _loadTree(self):
+        """
+        Load files tree from Teensy, using OSC
+        """
+        self.OSCinit()
+        self.OSCgetFiles()
+        self.setupTree()
 
-def onExit(event):
-    pass
+       
+    def onClick(self, event: Event, entry_var):
+        """
+        Deal with click in ILDA files tree
+        """
+        wdg = event.widget
+        sel = wdg.selection()
+        print("you've selected ", end='')
+        evv=''
+        for item in sel:
+            wit=wdg.item(item,"text")
+            print(wit, item, end=', ')
+            evv += item + ' '
+        print()
+        entry_var.set(evv)        
 
  
 if __name__=="__main__":
     chooser=ILDAchooser('COM9')
-    chooser.listbox.bind("<ButtonRelease-1>", lambda e:onClick(e, chooser.entry_var))
-    chooser.OSCinit()
-    chooser.OSCgetFiles()
-    chooser.setupTree()
     chooser.root.mainloop()
