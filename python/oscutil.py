@@ -156,7 +156,7 @@ class OSCutil:
     # The default timetag is 1, which means "immediately"
     @staticmethod
     def makeBundle(ell,ttag=1):
-        rv = pad(b'#bundle') + struct.pack(">Q",ttag)
+        rv = OSCutil.pad(b'#bundle') + struct.pack(">Q",ttag)
         for el in ell:
             rv += struct.pack(">L%ds" % len(el),len(el),el)
         #print(rv)
