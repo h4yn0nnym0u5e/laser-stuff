@@ -46,7 +46,7 @@ class ILDAchooser:
         frm.columnconfigure(0,weight=1)
         frm.columnconfigure(3,weight=1)
         frm.rowconfigure(1,weight=1)
-        ttk.Label(frm, text="Hello World!").grid(column=0, row=0)
+        ttk.Label(frm, text=f"Teensy on {port}").grid(column=0, row=0)
         ttk.Button(frm, text="Quit", command=root.destroy).grid(column=4, row=0, sticky="e")
         
         #entry_var = StringVar()
