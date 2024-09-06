@@ -41,7 +41,7 @@ AudioConnection          patchCord19(mixerY, 0, i2sOut, 1);
 AudioControlSGTL5000     sgtl5000;     //xy=1075,484
 // GUItool: end automatically generated code
 
-Shape shapes[8];
+Shapes<8> shapes;
 //============================================================================
 ILDAlist& listFiles(FS& fs, const char* root="/")
 {
@@ -204,7 +204,39 @@ void routeShape(OSCMessage& msg,int addressOffset,OSCBundle& reply)
     msg.getString(1,fn,50);
     msg.getString(2,where,50);
     Serial.printf("Load shape %s to slot %d, using %s\n", fn, slot, where);
+    if (slot < shapes.count())
+    {
+      Shape& shape = shapes[slot];  
+      bool ok = false;
+      
+      if (0 == strncmp(where, "heap", 4))
+        ok = shape.loadHeap(fn);
+      else if (0 == strncmp(where, "ext", 3))
+        ok = shape.loadExt(fn);
+
+      repl.add(ok?(int) OSCUtils::OK:(int) OSCUtils::NOT_FOUND);
+    }
   }
+  else if (OSCUtils::isStaticTarget(msg,addressOffset,"/entry","i"))
+  {
+    int slot;
     
-  repl.add(0);
+    slot = msg.getInt(0);
+    if (slot < shapes.count())
+    {
+      Shape& shape = shapes[slot];
+
+      if (shape.isReady())
+        repl.add(shape.getFilename()).add((int) OSCUtils::OK);
+      else        
+        repl.add("<empty>").add((int) OSCUtils::OK);
+    }
+    else
+      repl.add((int) OSCUtils::NOT_FOUND);
+    
+  }
+  else if (OSCUtils::isStaticTarget(msg,addressOffset,"/slots",NULL))
+  {
+    repl.add(shapes.count()).add((int) OSCUtils::OK);
+  } 
 }

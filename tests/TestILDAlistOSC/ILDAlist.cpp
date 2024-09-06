@@ -78,6 +78,12 @@ bool Shape::load(const char* fp, where_e w, FS& fs)
     File f = pfs->open(fp,FILE_READ);
     if (!f)
       break;
+
+    if (f.isDirectory())
+    {
+      f.close();
+      break;      
+    }
       
     // allocate the new buffer
     where = w;
@@ -87,17 +93,17 @@ bool Shape::load(const char* fp, where_e w, FS& fs)
     {
       case STREAM:
         memILDA = nullptr;
-        fileName = (char*) malloc(strlen(fp));
+        fileName = (char*) malloc(strlen(fp)+1);
         break;
         
       case HEAP:
-        memILDA = (uint8_t*) malloc(szILDA + strlen(fp));
+        memILDA = (uint8_t*) malloc(szILDA + strlen(fp)+1);
         if (nullptr != memILDA)
           fileName = (char*) memILDA+szILDA;
         break;
         
       case EXT:
-        memILDA = (uint8_t*) extmem_malloc(szILDA + strlen(fp));
+        memILDA = (uint8_t*) extmem_malloc(szILDA + strlen(fp)+1);
         if (nullptr != memILDA)
           fileName = (char*) memILDA+szILDA;
         break;

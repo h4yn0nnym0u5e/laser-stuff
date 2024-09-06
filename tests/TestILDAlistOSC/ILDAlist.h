@@ -40,3 +40,13 @@ class Shape
     bool isReady(void) { return nullptr != fileName; }
     char* getFilename(void) { return fileName; }
 };
+
+template<int N>
+class Shapes
+{
+  Shape shapes[N+1]; // extra dummy entry
+  int _count{N};
+public:
+  Shape& operator[](int idx) {if (idx >= _count) idx = _count; return shapes[idx]; }
+  int count(void) { return _count; }
+};

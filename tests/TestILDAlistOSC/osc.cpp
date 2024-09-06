@@ -55,8 +55,8 @@ void processMessage(OSCMessage* msg,OSCBundle& reply)
     // to whichever engines they choose to implement. The OSCAudio library
     // implements /audio and /dynamic, but /fs is implemented within this demo
     
-    if (!msg->route("/teensy*/ilda",msgRouteILDA))                      // see if this object can use the message
-      if (!msg->route("/teensy*/shape",msgRouteShape))               // or this one
+    if (!msg->route("/teensy*/ilda",msgRouteILDA))      // see if this object can use the message
+      if (!msg->route("/teensy*/shapes",msgRouteShape)) // or this one
          reply.getOSCMessage(0)->add(NOT_ROUTED);  // got no takers - say so
   }
   else

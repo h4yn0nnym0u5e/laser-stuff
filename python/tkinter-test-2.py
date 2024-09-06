@@ -1,6 +1,34 @@
 from tkinter import *
 from tkinter import ttk
 from oscutil import OSCutil
+import re
+
+class TreeFrame:
+    def __init__(self, parent, loadTree, onClick, clickResult):            
+        frame = ttk.Frame(parent, padding=5)
+        frame.configure(borderwidth=2, relief="raised")
+        frame.columnconfigure(0,weight=1)
+        frame.rowconfigure(1,weight=1)
+        ttk.Label(frame, text="ILDA files on SD").grid(column=0, row=0, sticky="w")
+        ttk.Button(frame, text="Load", command=loadTree).grid(column=1, row=0)
+        
+        scrollbar = ttk.Scrollbar(frame)
+        listbox = ttk.Treeview(frame, yscrollcommand=scrollbar.set, show="tree",selectmode="browse")
+        scrollbar.configure(command=listbox.yview)
+        
+        listbox.grid(row=1, column=0, columnspan=2, sticky="news")
+        scrollbar.grid(row=1, column=2, sticky="nse")
+        listbox.bind("<ButtonRelease-1>", lambda e:onClick(e, clickResult))
+
+        self._root = frame
+        self._listbox = listbox
+
+    def root(self):
+        return self._root  
+
+    def listbox(self):
+        return self._listbox   
+        
 
 class ILDAchooser:
     def __init__(self, port):
@@ -18,32 +46,49 @@ class ILDAchooser:
         frm.columnconfigure(0,weight=1)
         frm.rowconfigure(1,weight=1)
         ttk.Label(frm, text="Hello World!").grid(column=0, row=0)
-        ttk.Button(frm, text="Quit", command=root.destroy).grid(column=2, row=0)
+        ttk.Button(frm, text="Quit", command=root.destroy).grid(column=4, row=0, sticky="e")
         
-        entry_var = StringVar()
-        entry = ttk.Entry(frm, textvariable=entry_var).grid(column=2, row=1, rowspan=2, sticky="news")
+        #entry_var = StringVar()
+        #entry = ttk.Entry(frm, textvariable=entry_var).grid(column=2, row=1, rowspan=2, sticky="news")
+        ttk.Button(frm, text=">>>", command=self._loadFile).grid(column=2, row=1)
         
-        undr = ttk.Frame(frm, padding=5, name="undr")
-        undr.configure(borderwidth=2, relief="raised")
-        undr.grid(column=0, row=1, columnspan=2, sticky="news")
-        undr.columnconfigure(0,weight=1)
-        undr.rowconfigure(1,weight=1)
-        #undr.grid()
-        ttk.Label(undr, text="ILDA files on SD").grid(column=0, row=0, sticky="w")
-        ttk.Button(undr, text="Load", command=self._loadTree).grid(column=1, row=0)
-        
-        scrollbar = ttk.Scrollbar(undr)
-        listbox = ttk.Treeview(undr, yscrollcommand=scrollbar.set, show="tree")
-        scrollbar.configure(command=listbox.yview)
-        
-        listbox.grid(row=1, column=0, columnspan=2, sticky="news")
-        scrollbar.grid(row=1, column=2, sticky="nse")
-        listbox.bind("<ButtonRelease-1>", lambda e:self.onClick(e, entry_var))
+        if 0:
+            ffiles = ttk.Frame(frm, padding=5, name="files")
+            files.configure(borderwidth=2, relief="raised")
+            files.grid(column=0, row=1, columnspan=2, sticky="news")
+            files.columnconfigure(0,weight=1)
+            files.rowconfigure(1,weight=1)
+            #undr.grid()
+            ttk.Label(files, text="ILDA files on SD").grid(column=0, row=0, sticky="w")
+            ttk.Button(files, text="Load", command=self._loadTree).grid(column=1, row=0)
+            
+            scrollbar = ttk.Scrollbar(files)
+            listbox = ttk.Treeview(files, yscrollcommand=scrollbar.set, show="tree")
+            scrollbar.configure(command=listbox.yview)
+            
+            listbox.grid(row=1, column=0, columnspan=2, sticky="news")
+            scrollbar.grid(row=1, column=2, sticky="nse")
+            listbox.bind("<ButtonRelease-1>", lambda e:self.onClick(e, self.clickedFile))
+
+        # Frame for list of files on the Teensy SD card
+        self.clickedFile = None
+        filesObj = TreeFrame(frm, self._loadTree, self.onClick, self.clickedFile)
+        files=filesObj.root()
+        files.grid(column=0, row=1, columnspan=2, sticky="news")
+        self.listbox = filesObj.listbox()
+        self._filesObj = filesObj
+
+        # Frame for list of shapes
+        self.clickedShape = None
+        shapesObj = TreeFrame(frm, self._loadShapeList, self.onClick, self.clickedShape)
+        shapes=shapesObj.root()
+        shapes.grid(column=3, row=1, columnspan=2, sticky="news")
+        self.shapesbox: ttk.Treeview = shapesObj.listbox()
+        self._shapesObj = shapesObj
 
         self.root = root
         self.osc=OSCutil(port)
-        self.listbox = listbox
-        self.entry_var = entry_var
+
 
     def OSCinit(self):
         """
@@ -106,7 +151,42 @@ class ILDAchooser:
         self.OSCgetFiles()
         self.setupTree()
 
-       
+    def _loadShapeList(self):
+        """
+        (Re-)load the list of loaded shapes from the Teensy
+        """
+        osc = self.osc
+        msg = osc.packAuto('/teensy1/shapes/slots')
+        osc.send(msg)
+        rv = osc.receive()
+        rvd = OSCutil.unpackAuto(rv)
+        self.scount = rvd['content'][0]['params'][1]
+
+        self.shapes = {}
+        for i in range(self.scount):
+            msg = osc.packAuto('/teensy1/shapes/entry',i)
+            osc.send(msg)
+            rv = osc.receive()
+            rvd = OSCutil.unpackAuto(rv)
+            print(rvd)
+            self.shapes[i] = rvd['content'][0]['params'][1]
+
+        self.shapesbox.delete(*self.shapesbox.get_children())
+        for idx in self.shapes:
+            self.shapesbox.insert("", "end", iid=f"shape{idx}", text=self.shapes[idx])
+
+                
+
+    def _loadFile(self):
+        print(f"Load {self.clickedFile} to {self.clickedShape}")
+        osc = self.osc
+        msg = osc.packAuto('/teensy1/shapes/load',self.clickedShape, self.clickedFile, "ext")
+        osc.send(msg)
+        rv = osc.receive()
+        rvd = OSCutil.unpackAuto(rv)
+        if 0 == rvd['content'][0]['params'][1]:  # success
+            self.shapesbox.item(f"shape{self.clickedShape}", text=self.clickedFile)
+
     def onClick(self, event: Event, entry_var):
         """
         Deal with click in ILDA files tree
@@ -120,7 +200,11 @@ class ILDAchooser:
             print(wit, item, end=', ')
             evv += item + ' '
         print()
-        entry_var.set(evv)        
+        mtch = re.search("shape([0-9]+)",evv)
+        if mtch:  # click in shapes list
+            self.clickedShape = int(mtch.group(1))
+        else:            
+            self.clickedFile = evv.strip()        
 
  
 if __name__=="__main__":
