@@ -1,0 +1,6 @@
+[submodule "tests/libraries/Audio"]
+	path = tests/libraries/Audio
+	url = https://github.com/h4yn0nnym0u5e/Audio.git
+[submodule "tests/libraries/OSC"]
+	path = tests/libraries/OSC
+	url = https://github.com/h4yn0nnym0u5e/OSC.git
