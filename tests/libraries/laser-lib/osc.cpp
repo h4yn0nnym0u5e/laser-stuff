@@ -102,7 +102,7 @@ void sendReply(OSCBundle& reply)
 
   checkIfRouted(&reply,"teensy");
   
-  DEBUGSERIALPORT.printf("\nReply has %d messages, %d OSC errors\n",reply.size(),reply.hasError()); 
+  DEBUGSERIALPORT.printf("Reply has %d messages, %d OSC errors\n",reply.size(),reply.hasError()); 
   for (int i=reply.size()-1;i>=0;i--)
   {
     pMsg = reply.getOSCMessage(i);

@@ -43,8 +43,38 @@ Demo of using structs to package up repeated elements in the otherwise flat stru
 ### StructTester02
 Demonstrate more stuff, including use of a streamed or in-memory ILDA file to give a rotating triangular repeat. Needs `/ilda/triangle.ild` on the SD card.
 
+### TestILDAlistOSC
+Demonstrate use of the `ILDAshapeLoader` utility. Configured to use USB for the OSC communication, and `Serial6` for debug. The debug channel accepts commands to play the loaded shapes:
+
+* li - list `.ild` files on the SD card
+* int:p:t - set playILDA object `p` (0 or 1) to interpolation method `t` (0 or 1)
+* lv:ch:g - set mixer channel `ch` to gain `g`
+* ld:s:f - load slot `s` with ILDA file `f`
+* pl:s:p:f - play slot `s` using playILDA object `p` at frequency `f`
+* stop - stops all ILDA playback
+* rt:p:f - rotate playILDA channel `p` at frequency `f` (negative `f` reverses the direction of rotation)
+
+## tests/libraries
+Libraries needed for some demos.
+
+* Audio: has laser-specific additions (git submodule)
+* OSC: updated version of the Teensyduino library (git submodule)
+* laser-lib: some utilities, mainly to do with OSC and ILDA files
+
+
 ## ilda
 Some useful ILDA-format files
 
 ## python
-Playing about with using spreadsheets and Python to create our own simple ILDA files
+Playing about with using spreadsheets and Python to create our own simple ILDA files, plus...
+
+### ILDAshapeLoader.py
+GUI using OSC to commumicate with the `TestILDAlistOSC` sketch:
+
+* run by typing `python ILDAshapeLoader.py COM7` at the command promt (replace `COM7` with the port used for OSC communication with the Teensy)
+* click the `Load` buttons to load the ILDA files and Shapes panes
+* select a file and a shape "slot", then click the `>>>` button to load a file to a slot
+* Click on the `Connected`/`Disconnected` indicator to close the serial port ready to upload a new Teensy sketch, then re-open it
+
+Currently only loads to `EXTMEM`. Needs `pyserial`, `sliplib` and `tkinter` libraries to be installed, and depends on the `oscutil.py` file.
+
