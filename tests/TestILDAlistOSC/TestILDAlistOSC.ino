@@ -41,47 +41,38 @@ AudioConnection          patchCord19(mixerY, 0, i2sOut, 1);
 AudioControlSGTL5000     sgtl5000;     //xy=1075,484
 // GUItool: end automatically generated code
 
-Shapes<8> shapes;
+Shapes<NUM_SHAPES> shapes;
 //============================================================================
 ILDAlist& listFiles(FS& fs, const char* root="/")
 {
   ILDAlist& fileList = *(new ILDAlist(fs,root));
   
-  Serial.println("=====================");
+  DEBUGSERIALPORT.println("=====================");
   for (int i=0;i<fileList.fileCount();i++)
-    Serial.printf("%s: %s\n", fileList.getName(i), fileList.getPath(i));
+    DEBUGSERIALPORT.printf("%s: %s\n", fileList.getName(i), fileList.getPath(i));
 
   return fileList;
 }
 
-//============================================================================
-void testOpen(ILDAlist& fileList, int idx)
-{
-  const char* fto = fileList.getPath(idx);
-  File f = SD.open(fto);
-  if (f)
-  {
-    Serial.printf("Opened %s OK\n",fto);
-    f.close();
-  }
-  else
-    Serial.printf("Couldn't open %s\n",fto);  
-}
+
 
 //============================================================================
 void setup() 
 {
   AudioMemory(50);
   
+  DEBUGSERIALPORT.begin(115200);
+  DEBUGSERIALPORT.println("Waiting for USB serial...");
+  
   while (!Serial)
     ;
 
   while (!SD.begin(BUILTIN_SDCARD))
   {
-    Serial.println("No SD card!");
+    DEBUGSERIALPORT.println("No SD card!");
     delay(500);    
   }
-  Serial.println("SD card found");
+  DEBUGSERIALPORT.println("SD card found");
 
   sgtl5000.setAddress(HIGH);
   sgtl5000.enable();
@@ -89,7 +80,7 @@ void setup()
   
   initOSC();
 
-  Serial.println("Ready");  
+  DEBUGSERIALPORT.println("Ready");  
 
 }
 
@@ -102,9 +93,11 @@ void loop()
 {
   updateOSC();  
 
-  while (Serial.available())
+  while (DEBUGSERIALPORT.available())
   {
-    char ch = Serial.read();
+    char ch = DEBUGSERIALPORT.read();
+    DEBUGSERIALPORT.print(ch);
+    
     if (idx < BUFLEN)
       buf[idx++] = ch;
 
@@ -114,7 +107,7 @@ void loop()
       int n, nr;
       
       buf[idx-1]= 0; // terminate
-      //Serial.printf("'%s': ",buf);
+      //DEBUGSERIALPORT.printf("'%s': ",buf);
       
       if (0 == strncmp(buf,"li",2))
       {
@@ -125,13 +118,13 @@ void loop()
         if (n>=0 && n<8)
         {
           shapes[n].loadHeap(buf+nr);
-          Serial.printf("%s %s\n",shapes[n].isReady()?"Loaded":"Failed to load",buf+nr);
+          DEBUGSERIALPORT.printf("%s %s\n",shapes[n].isReady()?"Loaded":"Failed to load",buf+nr);
         }
       }
       else if (2 == sscanf(buf, "pl:%d:%f", &n, &speed)) // play shape at frequency
       {
         if (n>=0 && n<8 && shapes[n].isReady())
-          Serial.printf("%s %s at %.2fHz\n",
+          DEBUGSERIALPORT.printf("%s %s at %.2fHz\n",
               shapes[n].play(playILDA1,speed)?"Playing":"Failed to play",
               shapes[n].getFilename(),
               speed
@@ -140,11 +133,11 @@ void loop()
       else if (0 == strncmp(buf, "stop", 4)) // stop playing
       {
         playILDA1.stop();
-        Serial.println("Stopped");
+        DEBUGSERIALPORT.println("Stopped");
       }
       idx=0;
       buf[0]=0;
-      Serial.println();
+      DEBUGSERIALPORT.println();
     }
   }
 }
@@ -203,7 +196,7 @@ void routeShape(OSCMessage& msg,int addressOffset,OSCBundle& reply)
     slot = msg.getInt(0);
     msg.getString(1,fn,50);
     msg.getString(2,where,50);
-    Serial.printf("Load shape %s to slot %d, using %s\n", fn, slot, where);
+    DEBUGSERIALPORT.printf("Load shape %s to slot %d, using %s\n", fn, slot, where);
     if (slot < shapes.count())
     {
       Shape& shape = shapes[slot];  

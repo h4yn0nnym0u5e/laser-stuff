@@ -40,37 +40,33 @@ class ILDAchooser:
         style=ttk.Style()
         style.theme_use("alt")
         style.configure("TButton", relief="raised")
-        
+        style.map('Outline.Toolbutton', 
+                  relief = "raised",
+                  background=[
+            ('disabled', 'gray'),
+            ('selected', 'green'),
+            ('!selected', 'red')],
+                  foreground=[
+            ('disabled', 'black'),
+            ('selected', 'white'),
+            ('!selected', 'yellow')])
+                
         frm = ttk.Frame(root, padding=10, name="frm")
         frm.grid(sticky="news")
         frm.columnconfigure(0,weight=1)
         frm.columnconfigure(3,weight=1)
         frm.rowconfigure(1,weight=1)
         ttk.Label(frm, text=f"Teensy on {port}").grid(column=0, row=0)
+        self.connectedVar = IntVar()
+        self.connectedVar.set(1)
+        self.connButton = ttk.Checkbutton(frm, text="Connected", command=self._connectSerial, variable=self.connectedVar, style="Outline.Toolbutton")
+        self.connButton.grid(column=3, row=0)
         ttk.Button(frm, text="Quit", command=root.destroy).grid(column=4, row=0, sticky="e")
         
         #entry_var = StringVar()
         #entry = ttk.Entry(frm, textvariable=entry_var).grid(column=2, row=1, rowspan=2, sticky="news")
         ttk.Button(frm, text=">>>", command=self._loadFile, width=4).grid(column=2, row=1)
         
-        if 0:
-            ffiles = ttk.Frame(frm, padding=5, name="files")
-            files.configure(borderwidth=2, relief="raised")
-            files.grid(column=0, row=1, columnspan=2, sticky="news")
-            files.columnconfigure(0,weight=1)
-            files.rowconfigure(1,weight=1)
-            #undr.grid()
-            ttk.Label(files, text="ILDA files on SD").grid(column=0, row=0, sticky="w")
-            ttk.Button(files, text="Load", command=self._loadTree).grid(column=1, row=0)
-            
-            scrollbar = ttk.Scrollbar(files)
-            listbox = ttk.Treeview(files, yscrollcommand=scrollbar.set, show="tree")
-            scrollbar.configure(command=listbox.yview)
-            
-            listbox.grid(row=1, column=0, columnspan=2, sticky="news")
-            scrollbar.grid(row=1, column=2, sticky="nse")
-            listbox.bind("<ButtonRelease-1>", lambda e:self.onClick(e, self.clickedFile))
-
         # Frame for list of files on the Teensy SD card
         self.clickedFile = None
         filesObj = TreeFrame(frm, "ILDA files on SD", self._loadTree, self.onClick, self.clickedFile)
@@ -88,7 +84,16 @@ class ILDAchooser:
         self._shapesObj = shapesObj
 
         self.root = root
+        self.port = port
         self.osc=OSCutil(port)
+
+    def _connectSerial(self):
+        if 0 == self.connectedVar.get():  # disconnect
+            self.connButton.config(text="Disconnected")
+            del self.osc
+        else:
+            self.connButton.config(text="Connected")
+            self.osc=OSCutil(self.port)
 
 
     def OSCinit(self):
@@ -102,6 +107,7 @@ class ILDAchooser:
         rv = osc.receive()
         rvd = OSCutil.unpackAuto(rv)
         self.fcount = rvd['content'][0]['params'][1]
+
 
     def OSCgetFiles(self):
         """
@@ -118,6 +124,7 @@ class ILDAchooser:
             fname = rvd['content'][0]['params'][1]
             self.files += [fname]
         
+
     def setupTree(self):
         """
         Create the tree view of the ILDA files on SD,
@@ -143,7 +150,8 @@ class ILDAchooser:
                         depths[path] += 1
                     self.listbox.insert(path, where, iid=newPath, text=folder)
                 path = newPath
-            
+
+
     def _loadTree(self):
         """
         Load files tree from Teensy, using OSC
@@ -152,8 +160,10 @@ class ILDAchooser:
         self.OSCgetFiles()
         self.setupTree()
 
+
     def _shapeText(self, slot, name):
         return f"Slot {slot}:  {name}"
+
 
     def _loadShapeList(self):
         """
@@ -172,7 +182,7 @@ class ILDAchooser:
             osc.send(msg)
             rv = osc.receive()
             rvd = OSCutil.unpackAuto(rv)
-            print(rvd)
+            # print(rvd)
             self.shapes[i] = rvd['content'][0]['params'][1]
 
         self.shapesbox.delete(*self.shapesbox.get_children())
@@ -224,9 +234,9 @@ class ILDAchooser:
         evv=''
         for item in sel:
             wit=wdg.item(item,"text")
-            print(wit, item, end=', ')
+            # print(wit, item, end=', ')
             evv += item + ' '
-        print()
+        # print()
         shapeIndex = self.shapeIDtoIndex(evv)
         if shapeIndex is not None:
             self.clickedShape = shapeIndex
@@ -235,5 +245,5 @@ class ILDAchooser:
 
  
 if __name__=="__main__":
-    chooser=ILDAchooser('COM9')
+    chooser=ILDAchooser('COM35')
     chooser.root.mainloop()

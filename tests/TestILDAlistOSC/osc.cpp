@@ -1,8 +1,6 @@
 #include "osc.h"
 
-SLIPEncodedSerial HWSERIAL(HWSERIALPORT);
-const char* notRouted="not routed!";
-
+SLIPEncodedClass HWSERIAL(OSCSERIALPORT);
 
 OSCBundle* replyStack; // where reply is currently being built
 //-----------------------------------------------------------------------------------------------------------------
@@ -13,7 +11,7 @@ void checkIfRouted(OSCBundle* reply, const char* dst)
   {
     OSCMessage* pMsg = reply->getOSCMessage(0);
     if (0 == pMsg->size()) // message wasn't routed...
-      pMsg->add(dst).add(NOT_ROUTED);
+      pMsg->add(dst).add((int) OSCUtils::NOT_FOUND);
   }
 }
 
@@ -48,8 +46,8 @@ void processMessage(OSCMessage* msg,OSCBundle& reply)
   if (!msg->hasError())
   {
     msg->getAddress(prt);  
-    //Serial.println(prt);
-    //Serial.flush();
+    //DEBUGSERIALPORT.println(prt);
+    //DEBUGSERIALPORT.flush();
 
     // This is the key point at which the user can route incoming OSC messages
     // to whichever engines they choose to implement. The OSCAudio library
@@ -57,12 +55,12 @@ void processMessage(OSCMessage* msg,OSCBundle& reply)
     
     if (!msg->route("/teensy*/ilda",msgRouteILDA))      // see if this object can use the message
       if (!msg->route("/teensy*/shapes",msgRouteShape)) // or this one
-         reply.getOSCMessage(0)->add(NOT_ROUTED);  // got no takers - say so
+         reply.getOSCMessage(0)->add((int) OSCUtils::NOT_FOUND);  // got no takers - say so
   }
   else
   {
-    Serial.println("error in msg");
-    reply.getOSCMessage(0)->add(NOT_ROUTED);
+    DEBUGSERIALPORT.println("error in msg");
+    reply.getOSCMessage(0)->add((int) OSCUtils::NOT_FOUND);
   }
   
   replyStack = replyPush;
@@ -78,18 +76,18 @@ void processBundle(OSCBundle* bndl,OSCBundle& reply)
     for (int i=0;i<bndlSize;i++)
     {
       OSCMessage* msg = bndl->getOSCMessage(i); 
-      //Serial.printf("Message %d\n",i);
+      //DEBUGSERIALPORT.printf("Message %d\n",i);
       processMessage(msg,reply);   
     }  
   }
   else
   {
-    //Serial.printf("error %d in bundle\n",(int) bndl->getError());
+    //DEBUGSERIALPORT.printf("error %d in bundle\n",(int) bndl->getError());
     
     for (int i=0;i<bndlSize;i++)
     {
       OSCMessage* msg = bndl->getOSCMessage(i); (void) msg;
-      //Serial.printf("error %d in message %d\n",(int) msg->getError(),i);
+      //DEBUGSERIALPORT.printf("error %d in message %d\n",(int) msg->getError(),i);
     }
   }  
 }
@@ -99,12 +97,12 @@ void sendReply(OSCBundle& reply)
 {
   int errCount = 0;
   // for debug
-  // reply.send(Serial);
+  // reply.send(DEBUGSERIALPORT);
   OSCMessage* pMsg;
 
   checkIfRouted(&reply,"teensy");
   
-  Serial.printf("\nReply has %d messages, %d OSC errors\n",reply.size(),reply.hasError()); 
+  DEBUGSERIALPORT.printf("\nReply has %d messages, %d OSC errors\n",reply.size(),reply.hasError()); 
   for (int i=reply.size()-1;i>=0;i--)
   {
     pMsg = reply.getOSCMessage(i);
@@ -113,11 +111,11 @@ void sendReply(OSCBundle& reply)
     if (last > 0 && pMsg->isInt(last) && (errv = pMsg->getInt(last)) != 0)
     {
       errCount++;
-      Serial.printf("%d ",errv);
+      DEBUGSERIALPORT.printf("%d ",errv);
     }
   }
   if (errCount > 0)
-    Serial.printf(": %d error flags\n",errCount);
+    DEBUGSERIALPORT.printf(": %d error flags\n",errCount);
 
   // for real!
   HWSERIAL.beginPacket();
@@ -141,7 +139,7 @@ void updateOSC()
   switch (state)
   {
     case boot:
-      Serial.print("Waiting...");
+      DEBUGSERIALPORT.print("Waiting...");
       bndl = new OSCBundle; // because empty() doesn't work...
       //bndl->empty();
       reply.empty();
@@ -173,7 +171,7 @@ void updateOSC()
       break;
 
     case processing:  
-      Serial.println("processing!");
+      DEBUGSERIALPORT.println("processing!");
       reply.setTimetag((uint8_t*) &tt).add("/reply"); // create first message with reply address: used for all messages
       
       if ('#' == firstCh)
@@ -189,7 +187,7 @@ void updateOSC()
           sendReply(reply);
         }
       }
-      Serial.println();
+      DEBUGSERIALPORT.println();
       delete bndl;
       state = boot;
       break;

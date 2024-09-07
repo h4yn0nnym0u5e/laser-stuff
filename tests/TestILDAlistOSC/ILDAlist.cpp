@@ -19,7 +19,7 @@ void ILDAlist::getFiles(const char* prefix, File dir)
     else 
     {
       const char* fn = entry.name();
-      //Serial.println(fn);
+      //DEBUGSERIALPORT.println(fn);
       if (nullptr != strstr(fn, ".ild"))
         addEntry(prefix,fn);   
      }
@@ -138,7 +138,7 @@ bool Shape::load(const char* fp, where_e w, FS& fs)
     f.close();
   } while (0);
 
-  //Serial.printf("%s %s\n", result?"Loaded":"Failed to load", fp);
+  //DEBUGSERIALPORT.printf("%s %s\n", result?"Loaded":"Failed to load", fp);
   return result;
 }
 
