@@ -2,6 +2,7 @@ from tkinter import *
 from tkinter import ttk
 from oscutil import OSCutil
 import re
+import sys
 
 class TreeFrame:
     def __init__(self, parent, label, loadTree, onClick, clickResult):            
@@ -86,6 +87,8 @@ class ILDAchooser:
         self.root = root
         self.port = port
         self.osc=OSCutil(port)
+        if not self.osc.isConnected():
+            self.connButton.invoke()
 
     def _connectSerial(self):
         if 0 == self.connectedVar.get():  # disconnect
@@ -245,5 +248,8 @@ class ILDAchooser:
 
  
 if __name__=="__main__":
-    chooser=ILDAchooser('COM35')
+    port = 'COM9'
+    if len(sys.argv) > 1:
+        port = sys.argv[1]
+    chooser=ILDAchooser(port)
     chooser.root.mainloop()

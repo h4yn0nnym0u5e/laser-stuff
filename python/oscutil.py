@@ -4,13 +4,18 @@ import struct
 
 class OSCutil:
     def __init__(self, port=None):
+        self.ser = None
         if port is not None:
-            # Set up communication channel
-            self.ser = serial.Serial(port,115200,timeout=1)
-            self.SLIPser = sliplib.SlipStream(self.ser,chunk_size=1)
-        else:
-            self.ser = None
-        
+            try:
+                # Set up communication channel
+                self.ser = serial.Serial(port,115200,timeout=1)
+                self.SLIPser = sliplib.SlipStream(self.ser,chunk_size=1)
+            except:
+                pass                
+
+    def isConnected(self):
+        return self.ser is not None
+
     def __del__(self):
         if self.ser is not None:
             self.ser.close()
@@ -22,8 +27,12 @@ class OSCutil:
             self.SLIPser.send_msg(msg)
 
     def receive(self):
-        msg = self.SLIPser.recv_msg()
+        if self.ser is None:
+            msg = "/disconnected"
+        else:            
+            msg = self.SLIPser.recv_msg()
         return msg
+    
         
         
         
