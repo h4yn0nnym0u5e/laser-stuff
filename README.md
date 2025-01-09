@@ -24,6 +24,12 @@ Plays back a .ILD file using the AudioPlayILDA object. Outputs XYZRGBs data on c
 Plays back a .ILD file using the AudioPlayILDA object. Outputs XYZRGBs data on channels 1-7 of a PCM3168 audio board. Includes ability to 
 send commands from the serial monitor to vary the playback rate and switch to playback of a named file from a RAM buffer.
 
+### ILDAfilePlayer5
+Demo capability to select interpolation method.
+
+### ILDAfilePlayer6
+Add capability to select interpolation method independently for XYZ and RGB.
+
 ### ILDAinfo
 Use of utility methods to get information on ILDA files, and load to memory
 
@@ -53,6 +59,15 @@ Demonstrate use of the `ILDAshapeLoader` utility. Configured to use USB for the 
 * pl:s:p:f - play slot `s` using playILDA object `p` at frequency `f`
 * stop - stops all ILDA playback
 * rt:p:f - rotate playILDA channel `p` at frequency `f` (negative `f` reverses the direction of rotation)
+
+### TriggerTest
+Demo of simple playback triggering. Single file playback, change code to try out edge-triggered
+or level-gated options.
+
+### TriggerTestV2
+Much more complex demo of using a single laser to interleave playback of two ILDA files
+on a frame-by-frame basis. Probably not ideal, the transition between images should
+be less abrupt - need to think about this.
 
 ## tests/libraries
 Libraries needed for some demos.

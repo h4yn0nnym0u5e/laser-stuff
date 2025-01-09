@@ -12,8 +12,6 @@ src = [[ # 3-point triangle - play back SLOWLY!
     [ 16383, 28377,0,4],
     [ 16383,-28378,0,6]
     ]]
-
-
 srcQ = [ # 441-point triangle with blanking
 [
 [-32767,0,0,1],
@@ -462,28 +460,60 @@ srcQ = [ # 441-point triangle with blanking
 ]
     ]
 
-name="triangle-3pt.ild"
-hdrname = b"trian3pt"
-ffp = os.path.join(fp,'ilda',name)
-ffj = os.path.join(fp,'python',name.replace('.ild','.json'))
-#src = json.load(
-opf = open(ffp,'wb')
+pent = [[[32767,0,0,2],
+        [10126,31163,0,3],
+        [-26509,19260,0,4],
+        [-26509,-19260,0,6],
+        [10126,-31163,0,7]
+        ]]
 
-hdrFmt = ">4sxxxB8s8sHHHBx"  # header format
-recFmt = ">hhBB"  # Format 1 record: X Y status colour
+star5 = [[
+    [32767,0,0,2],
+    [-26509,19260,0,3],
+    [10126,-31163,0,4],
+    [10126,31163,0,6],
+    [-26509,-19260,0,7]
+    ]]
 
-n=0
-for frame in src:
-    hdr = struct.pack(hdrFmt,b"ILDA",1,hdrname,b"h4yn0nny",len(frame),n,len(src)+1,0)
-    n += 1
-    print(hdr)
+
+star7 = [[
+    [32767,0,0,2],
+    [-29522,14217,0,3],
+    [20430,-25618,0,4],
+    [-7291,31945,0,5],
+    [-7291,-31945,0,6],
+    [20430,25618,0,7],
+    [-29522,-14217,0,1]
+    ]]
+
+srcs = [
+    (pent,"pentagon.ild",b"pentagon"),
+    (star5,"star-5pt.ild",b"star-5pt"),
+    (star7,"star-7pt.ild",b"star-7pt"),
+]
+
+for shape in srcs:
+    src, name, hdrname = shape
+    ffp = os.path.join(fp,'ilda',name)
+    ffj = os.path.join(fp,'python',name.replace('.ild','.json'))
+    #src = json.load(
+    opf = open(ffp,'wb')
+
+    hdrFmt = ">4sxxxB8s8sHHHBx"  # header format
+    recFmt = ">hhBB"  # Format 1 record: X Y status colour
+
+    n=0
+    for frame in src:
+        hdr = struct.pack(hdrFmt,b"ILDA",1,hdrname,b"h4yn0nny",len(frame),n,len(src)+1,0)
+        n += 1
+        print(hdr)
+        opf.write(hdr)
+        for record in frame:
+            rec = struct.pack(recFmt,record[0],record[1],record[2],record[3])
+            opf.write(rec)
+    hdr = struct.pack(hdrFmt,b"ILDA",1,hdrname,b"h4yn0nny",0,n,len(src)+1,0)        
     opf.write(hdr)
-    for record in frame:
-        rec = struct.pack(recFmt,record[0],record[1],record[2],record[3])
-        opf.write(rec)
-hdr = struct.pack(hdrFmt,b"ILDA",1,hdrname,b"h4yn0nny",0,n,len(src)+1,0)        
-opf.write(hdr)
-opf.close()                      
+    opf.close()                      
 
 if 0:
     print("file,fmt,recs,total")
