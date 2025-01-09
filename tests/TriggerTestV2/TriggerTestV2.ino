@@ -1,33 +1,8 @@
 /*
  * Test of AudioPlayILDA with real-time triggering. 
  */
- /*
-#include <Audio.h>
 
-// GUItool: begin automatically generated code
-AudioSynthWaveform       wavTrig;      //xy=151,233
-AudioSynthWaveformDc     dcTrig;            //xy=157,277
-AudioMixer4              mixTrig;         //xy=318,264
-AudioSynthWaveform       wav;            //xy=482,143
-AudioPlayILDA            playILDA1;      //xy=484,265
-AudioRecordQueue         queue1;         //xy=650,160
-AudioOutputTDM           tdm2O;          //xy=738,324
-
-AudioConnection          patchCord1(wavTrig, 0, mixTrig, 0);
-AudioConnection          patchCord2(dcTrig, 0, mixTrig, 1);
-AudioConnection          patchCord3(mixTrig, playILDA1);
-AudioConnection          patchCord4(mixTrig, 0, tdm2O, 14);
-AudioConnection          patchCord5(playILDA1, 0, tdm2O, 0);
-AudioConnection          patchCord6(playILDA1, 0, queue1, 0);
-AudioConnection          patchCord7(playILDA1, 1, tdm2O, 2);
-AudioConnection          patchCord8(playILDA1, 2, tdm2O, 4);
-AudioConnection          patchCord9(playILDA1, 3, tdm2O, 6);
-AudioConnection          patchCord10(playILDA1, 4, tdm2O, 8);
-AudioConnection          patchCord11(playILDA1, 5, tdm2O, 10);
-AudioConnection          patchCord12(playILDA1, 6, tdm2O, 12);
-*/
-
-#include "design.h"
+#include "design.h" // created using https://manicken.github.io/#
 
 Projector proj;
 AudioControlPCM3168      pcm3168;        //xy=766,479
